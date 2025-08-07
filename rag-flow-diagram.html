@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG System Flow Diagram</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 1400px;
+            width: 100%;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+        
+        svg {
+            width: 100%;
+            height: auto;
+            overflow: visible;
+        }
+        
+        .layer {
+            opacity: 0;
+            animation: fadeIn 0.5s forwards;
+        }
+        
+        .layer-title {
+            font-weight: bold;
+            font-size: 14px;
+            fill: #333;
+        }
+        
+        .component {
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .component:hover .box {
+            filter: brightness(1.1);
+            transform: scale(1.02);
+        }
+        
+        .flow-arrow {
+            stroke: #666;
+            stroke-width: 2;
+            fill: none;
+            marker-end: url(#arrowhead);
+            opacity: 0;
+            stroke-dasharray: 5;
+            animation: drawLine 1s forwards;
+        }
+        
+        .flow-text {
+            font-size: 11px;
+            fill: #555;
+            opacity: 0;
+            animation: fadeIn 0.3s forwards;
+        }
+        
+        .box {
+            rx: 8;
+            ry: 8;
+            stroke-width: 2;
+        }
+        
+        .frontend-box {
+            fill: #e3f2fd;
+            stroke: #1976d2;
+        }
+        
+        .backend-box {
+            fill: #f3e5f5;
+            stroke: #7b1fa2;
+        }
+        
+        .ai-box {
+            fill: #fff3e0;
+            stroke: #f57c00;
+        }
+        
+        .db-box {
+            fill: #e8f5e9;
+            stroke: #388e3c;
+        }
+        
+        .tool-box {
+            fill: #fce4ec;
+            stroke: #c2185b;
+        }
+        
+        .step-number {
+            fill: white;
+            font-weight: bold;
+            font-size: 10px;
+        }
+        
+        .step-circle {
+            fill: #ff4444;
+            opacity: 0;
+            animation: popIn 0.3s forwards;
+        }
+        
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+        
+        @keyframes drawLine {
+            to { 
+                opacity: 1;
+                stroke-dasharray: 0;
+            }
+        }
+        
+        @keyframes popIn {
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+            from {
+                transform: scale(0);
+            }
+        }
+        
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .legend-box {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 2px solid;
+        }
+        
+        .info-box {
+            position: absolute;
+            background: white;
+            border: 2px solid #666;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            display: none;
+            max-width: 300px;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 RAG Chatbot System - Request Flow Diagram</h1>
+        
+        <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+            <!-- Define arrow marker -->
+            <defs>
+                <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#666"/>
+                </marker>
+            </defs>
+            
+            <!-- Layer 1: Frontend -->
+            <g class="layer" style="animation-delay: 0.2s">
+                <text x="60" y="30" class="layer-title">FRONTEND</text>
+                
+                <g class="component" data-info="User types question in web interface">
+                    <rect x="50" y="50" width="140" height="60" class="box frontend-box"/>
+                    <text x="120" y="75" text-anchor="middle" font-size="13">User Interface</text>
+                    <text x="120" y="95" text-anchor="middle" font-size="11" fill="#666">HTML/JS</text>
+                    <circle cx="60" cy="60" r="12" class="step-circle" style="animation-delay: 0.3s"/>
+                    <text x="60" y="64" text-anchor="middle" class="step-number">1</text>
+                </g>
+                
+                <g class="component" data-info="JavaScript sends POST request">
+                    <rect x="50" y="150" width="140" height="60" class="box frontend-box"/>
+                    <text x="120" y="175" text-anchor="middle" font-size="13">HTTP Client</text>
+                    <text x="120" y="195" text-anchor="middle" font-size="11" fill="#666">fetch()</text>
+                    <circle cx="60" cy="160" r="12" class="step-circle" style="animation-delay: 0.5s"/>
+                    <text x="60" y="164" text-anchor="middle" class="step-number">2</text>
+                </g>
+            </g>
+            
+            <!-- Layer 2: Backend API -->
+            <g class="layer" style="animation-delay: 0.4s">
+                <text x="280" y="30" class="layer-title">BACKEND API</text>
+                
+                <g class="component" data-info="FastAPI receives and validates request">
+                    <rect x="270" y="50" width="140" height="60" class="box backend-box"/>
+                    <text x="340" y="75" text-anchor="middle" font-size="13">FastAPI</text>
+                    <text x="340" y="95" text-anchor="middle" font-size="11" fill="#666">/api/query</text>
+                    <circle cx="280" cy="60" r="12" class="step-circle" style="animation-delay: 0.7s"/>
+                    <text x="280" y="64" text-anchor="middle" class="step-number">3</text>
+                </g>
+                
+                <g class="component" data-info="Session management for conversation history">
+                    <rect x="270" y="150" width="140" height="60" class="box backend-box"/>
+                    <text x="340" y="175" text-anchor="middle" font-size="13">Session Manager</text>
+                    <text x="340" y="195" text-anchor="middle" font-size="11" fill="#666">History: 2 msgs</text>
+                </g>
+            </g>
+            
+            <!-- Layer 3: RAG System -->
+            <g class="layer" style="animation-delay: 0.6s">
+                <text x="500" y="30" class="layer-title">RAG ORCHESTRATOR</text>
+                
+                <g class="component" data-info="Main orchestration logic">
+                    <rect x="490" y="50" width="140" height="60" class="box backend-box"/>
+                    <text x="560" y="75" text-anchor="middle" font-size="13">RAG System</text>
+                    <text x="560" y="95" text-anchor="middle" font-size="11" fill="#666">Orchestrator</text>
+                    <circle cx="500" cy="60" r="12" class="step-circle" style="animation-delay: 0.9s"/>
+                    <text x="500" y="64" text-anchor="middle" class="step-number">4</text>
+                </g>
+                
+                <g class="component" data-info="Tool manager for search operations">
+                    <rect x="490" y="150" width="140" height="60" class="box tool-box"/>
+                    <text x="560" y="175" text-anchor="middle" font-size="13">Tool Manager</text>
+                    <text x="560" y="195" text-anchor="middle" font-size="11" fill="#666">Search Tools</text>
+                </g>
+            </g>
+            
+            <!-- Layer 4: AI -->
+            <g class="layer" style="animation-delay: 0.8s">
+                <text x="720" y="30" class="layer-title">AI LAYER</text>
+                
+                <g class="component" data-info="Claude AI decides whether to search">
+                    <rect x="710" y="50" width="140" height="60" class="box ai-box"/>
+                    <text x="780" y="75" text-anchor="middle" font-size="13">Claude AI</text>
+                    <text x="780" y="95" text-anchor="middle" font-size="11" fill="#666">Sonnet 4</text>
+                    <circle cx="720" cy="60" r="12" class="step-circle" style="animation-delay: 1.1s"/>
+                    <text x="720" y="64" text-anchor="middle" class="step-number">5</text>
+                </g>
+                
+                <g class="component" data-info="AI decides to use search tool">
+                    <rect x="710" y="150" width="140" height="60" class="box ai-box"/>
+                    <text x="780" y="175" text-anchor="middle" font-size="13">Tool Decision</text>
+                    <text x="780" y="195" text-anchor="middle" font-size="11" fill="#666">Auto-select</text>
+                    <circle cx="720" cy="160" r="12" class="step-circle" style="animation-delay: 1.3s"/>
+                    <text x="720" y="164" text-anchor="middle" class="step-number">6</text>
+                </g>
+            </g>
+            
+            <!-- Layer 5: Search & Storage -->
+            <g class="layer" style="animation-delay: 1.0s">
+                <text x="940" y="30" class="layer-title">SEARCH & STORAGE</text>
+                
+                <g class="component" data-info="Search tool executes vector search">
+                    <rect x="930" y="50" width="140" height="60" class="box tool-box"/>
+                    <text x="1000" y="75" text-anchor="middle" font-size="13">Search Tool</text>
+                    <text x="1000" y="95" text-anchor="middle" font-size="11" fill="#666">CourseSearch</text>
+                    <circle cx="940" cy="60" r="12" class="step-circle" style="animation-delay: 1.5s"/>
+                    <text x="940" y="64" text-anchor="middle" class="step-number">7</text>
+                </g>
+                
+                <g class="component" data-info="ChromaDB performs vector similarity search">
+                    <rect x="930" y="150" width="140" height="60" class="box db-box"/>
+                    <text x="1000" y="175" text-anchor="middle" font-size="13">ChromaDB</text>
+                    <text x="1000" y="195" text-anchor="middle" font-size="11" fill="#666">Vector Store</text>
+                    <circle cx="940" cy="160" r="12" class="step-circle" style="animation-delay: 1.7s"/>
+                    <text x="940" y="164" text-anchor="middle" class="step-number">8</text>
+                </g>
+            </g>
+            
+            <!-- Additional Components -->
+            <g class="layer" style="animation-delay: 1.2s">
+                <!-- Document Processor -->
+                <g class="component" data-info="Processes course documents into chunks">
+                    <rect x="930" y="280" width="140" height="60" class="box backend-box"/>
+                    <text x="1000" y="305" text-anchor="middle" font-size="13">Doc Processor</text>
+                    <text x="1000" y="325" text-anchor="middle" font-size="11" fill="#666">Chunking</text>
+                </g>
+                
+                <!-- Embeddings -->
+                <g class="component" data-info="Sentence transformers for embeddings">
+                    <rect x="930" y="380" width="140" height="60" class="box db-box"/>
+                    <text x="1000" y="405" text-anchor="middle" font-size="13">Embeddings</text>
+                    <text x="1000" y="425" text-anchor="middle" font-size="11" fill="#666">MiniLM-L6</text>
+                </g>
+            </g>
+            
+            <!-- Flow Arrows -->
+            <!-- Request flow -->
+            <path d="M 190 80 L 270 80" class="flow-arrow" style="animation-delay: 0.4s"/>
+            <text x="230" y="75" class="flow-text" style="animation-delay: 0.4s">POST query</text>
+            
+            <path d="M 190 180 L 270 180" class="flow-arrow" style="animation-delay: 0.6s"/>
+            <text x="230" y="175" class="flow-text" style="animation-delay: 0.6s">session_id</text>
+            
+            <path d="M 410 80 L 490 80" class="flow-arrow" style="animation-delay: 0.8s"/>
+            <text x="450" y="75" class="flow-text" style="animation-delay: 0.8s">delegate</text>
+            
+            <path d="M 630 80 L 710 80" class="flow-arrow" style="animation-delay: 1.0s"/>
+            <text x="670" y="75" class="flow-text" style="animation-delay: 1.0s">AI call</text>
+            
+            <path d="M 780 110 L 780 150" class="flow-arrow" style="animation-delay: 1.2s"/>
+            <text x="785" y="130" class="flow-text" style="animation-delay: 1.2s">decide</text>
+            
+            <path d="M 850 180 L 930 180" class="flow-arrow" style="animation-delay: 1.4s"/>
+            <text x="890" y="175" class="flow-text" style="animation-delay: 1.4s">search</text>
+            
+            <path d="M 1000 110 L 1000 150" class="flow-arrow" style="animation-delay: 1.6s"/>
+            <text x="1005" y="130" class="flow-text" style="animation-delay: 1.6s">vector query</text>
+            
+            <!-- Response flow (reverse) -->
+            <path d="M 930 180 L 850 180" class="flow-arrow" style="animation-delay: 1.8s; stroke: #4CAF50"/>
+            <text x="890" y="195" class="flow-text" style="animation-delay: 1.8s; fill: #4CAF50">chunks</text>
+            
+            <path d="M 710 180 L 630 180" class="flow-arrow" style="animation-delay: 2.0s; stroke: #4CAF50"/>
+            <text x="670" y="195" class="flow-text" style="animation-delay: 2.0s; fill: #4CAF50">results</text>
+            
+            <path d="M 710 80 L 630 80" class="flow-arrow" style="animation-delay: 2.2s; stroke: #4CAF50"/>
+            <text x="670" y="95" class="flow-text" style="animation-delay: 2.2s; fill: #4CAF50">response</text>
+            
+            <path d="M 490 80 L 410 80" class="flow-arrow" style="animation-delay: 2.4s; stroke: #4CAF50"/>
+            <text x="450" y="95" class="flow-text" style="animation-delay: 2.4s; fill: #4CAF50">answer</text>
+            
+            <path d="M 270 80 L 190 80" class="flow-arrow" style="animation-delay: 2.6s; stroke: #4CAF50"/>
+            <text x="230" y="95" class="flow-text" style="animation-delay: 2.6s; fill: #4CAF50">JSON</text>
+            
+            <!-- Tool connections -->
+            <path d="M 560 110 L 560 150" class="flow-arrow" style="animation-delay: 1.0s; stroke-dasharray: 3"/>
+            <path d="M 630 180 L 710 180" class="flow-arrow" style="animation-delay: 1.2s; stroke-dasharray: 3"/>
+            <path d="M 780 210 L 780 250 L 560 250 L 560 210" class="flow-arrow" style="animation-delay: 1.4s; stroke-dasharray: 3"/>
+            
+            <!-- Document processing flow -->
+            <path d="M 1000 210 L 1000 280" class="flow-arrow" style="animation-delay: 1.8s; stroke-dasharray: 3"/>
+            <path d="M 1000 340 L 1000 380" class="flow-arrow" style="animation-delay: 2.0s; stroke-dasharray: 3"/>
+            
+            <!-- Main data flow summary -->
+            <g class="layer" style="animation-delay: 2.8s">
+                <rect x="50" y="500" width="1020" height="200" fill="none" stroke="#333" stroke-width="2" rx="10" ry="10" stroke-dasharray="5"/>
+                <text x="560" y="530" text-anchor="middle" font-size="16" font-weight="bold" fill="#333">Complete Request Flow Summary</text>
+                
+                <!-- Flow steps -->
+                <text x="70" y="560" font-size="12" fill="#555">1. User types question → 2. JS sends POST /api/query → 3. FastAPI validates → 4. RAG System orchestrates</text>
+                <text x="70" y="580" font-size="12" fill="#555">5. Claude AI analyzes → 6. Decides to search → 7. Search tool queries → 8. ChromaDB returns vectors</text>
+                <text x="70" y="600" font-size="12" fill="#555">9. Claude generates answer → 10. RAG collects sources → 11. FastAPI returns JSON → 12. UI displays response</text>
+                
+                <!-- Key metrics -->
+                <rect x="70" y="620" width="300" height="60" fill="#f5f5f5" stroke="#999" rx="5" ry="5"/>
+                <text x="220" y="640" text-anchor="middle" font-size="13" font-weight="bold" fill="#333">Configuration</text>
+                <text x="80" y="660" font-size="11" fill="#666">• Chunks: 800 chars, 100 overlap</text>
+                <text x="80" y="675" font-size="11" fill="#666">• Max results: 5, History: 2 messages</text>
+                
+                <rect x="400" y="620" width="300" height="60" fill="#f5f5f5" stroke="#999" rx="5" ry="5"/>
+                <text x="550" y="640" text-anchor="middle" font-size="13" font-weight="bold" fill="#333">Technologies</text>
+                <text x="410" y="660" font-size="11" fill="#666">• AI: Claude Sonnet 4, ChromaDB</text>
+                <text x="410" y="675" font-size="11" fill="#666">• Backend: FastAPI, Frontend: Vanilla JS</text>
+                
+                <rect x="730" y="620" width="320" height="60" fill="#f5f5f5" stroke="#999" rx="5" ry="5"/>
+                <text x="890" y="640" text-anchor="middle" font-size="13" font-weight="bold" fill="#333">Performance</text>
+                <text x="740" y="660" font-size="11" fill="#666">• Semantic search with embeddings</text>
+                <text x="740" y="675" font-size="11" fill="#666">• Session persistence, Tool-based approach</text>
+            </g>
+        </svg>
+        
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-box" style="background: #e3f2fd; border-color: #1976d2;"></div>
+                <span>Frontend</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box" style="background: #f3e5f5; border-color: #7b1fa2;"></div>
+                <span>Backend</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box" style="background: #fff3e0; border-color: #f57c00;"></div>
+                <span>AI Layer</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box" style="background: #e8f5e9; border-color: #388e3c;"></div>
+                <span>Database</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box" style="background: #fce4ec; border-color: #c2185b;"></div>
+                <span>Tools</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="info-box" id="infoBox"></div>
+    
+    <script>
+        // Interactive tooltips
+        const components = document.querySelectorAll('.component');
+        const infoBox = document.getElementById('infoBox');
+        
+        components.forEach(comp => {
+            comp.addEventListener('mouseenter', (e) => {
+                const info = comp.getAttribute('data-info');
+                if (info) {
+                    infoBox.textContent = info;
+                    infoBox.style.display = 'block';
+                    infoBox.style.left = e.pageX + 10 + 'px';
+                    infoBox.style.top = e.pageY + 10 + 'px';
+                }
+            });
+            
+            comp.addEventListener('mousemove', (e) => {
+                infoBox.style.left = e.pageX + 10 + 'px';
+                infoBox.style.top = e.pageY + 10 + 'px';
+            });
+            
+            comp.addEventListener('mouseleave', () => {
+                infoBox.style.display = 'none';
+            });
+        });
+    </script>
+</body>
+</html>

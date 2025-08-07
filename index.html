@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Particle Visualization</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Arial', sans-serif;
+        }
+        
+        canvas {
+            display: block;
+            cursor: crosshair;
+        }
+        
+        .info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: 14px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .info h2 {
+            margin: 0 0 10px 0;
+            font-size: 20px;
+        }
+        
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid white;
+            color: white;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+        
+        button.active {
+            background: rgba(255, 255, 255, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="info">
+        <h2>Interactive Particle System</h2>
+        <p>Move your mouse to attract particles</p>
+        <p>Click to create an explosion</p>
+        <p>Particles: <span id="particleCount">0</span></p>
+    </div>
+    
+    <div class="controls">
+        <button id="modeNormal" class="active">Normal</button>
+        <button id="modeRainbow">Rainbow</button>
+        <button id="modeGravity">Gravity</button>
+        <button id="reset">Reset</button>
+    </div>
+    
+    <canvas id="canvas"></canvas>
+    
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const particleCountSpan = document.getElementById('particleCount');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        let particles = [];
+        let mouse = { x: canvas.width / 2, y: canvas.height / 2 };
+        let mode = 'normal';
+        let hue = 0;
+        
+        class Particle {
+            constructor(x, y, velocityX, velocityY) {
+                this.x = x;
+                this.y = y;
+                this.velocityX = velocityX;
+                this.velocityY = velocityY;
+                this.size = Math.random() * 3 + 1;
+                this.life = 1;
+                this.decay = Math.random() * 0.02 + 0.005;
+                this.color = mode === 'rainbow' ? `hsl(${Math.random() * 360}, 100%, 50%)` : 
+                           `rgba(255, 255, 255, ${this.life})`;
+                this.trail = [];
+                this.maxTrailLength = 10;
+            }
+            
+            update() {
+                // Add current position to trail
+                this.trail.push({ x: this.x, y: this.y, life: this.life });
+                if (this.trail.length > this.maxTrailLength) {
+                    this.trail.shift();
+                }
+                
+                // Calculate distance to mouse
+                const dx = mouse.x - this.x;
+                const dy = mouse.y - this.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                // Attraction force
+                if (distance < 200) {
+                    const force = (200 - distance) / 200;
+                    this.velocityX += (dx / distance) * force * 0.5;
+                    this.velocityY += (dy / distance) * force * 0.5;
+                }
+                
+                // Apply gravity mode
+                if (mode === 'gravity') {
+                    this.velocityY += 0.1;
+                }
+                
+                // Update position
+                this.x += this.velocityX;
+                this.y += this.velocityY;
+                
+                // Friction
+                this.velocityX *= 0.98;
+                this.velocityY *= 0.98;
+                
+                // Bounce off edges
+                if (this.x < this.size || this.x > canvas.width - this.size) {
+                    this.velocityX *= -0.8;
+                    this.x = Math.max(this.size, Math.min(canvas.width - this.size, this.x));
+                }
+                if (this.y < this.size || this.y > canvas.height - this.size) {
+                    this.velocityY *= -0.8;
+                    this.y = Math.max(this.size, Math.min(canvas.height - this.size, this.y));
+                }
+                
+                // Update life
+                this.life -= this.decay;
+                
+                // Update color
+                if (mode === 'rainbow') {
+                    this.color = `hsl(${(hue + distance * 0.5) % 360}, 100%, 50%)`;
+                } else {
+                    this.color = `rgba(255, 255, 255, ${this.life})`;
+                }
+            }
+            
+            draw() {
+                // Draw trail
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = this.size;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                
+                for (let i = 0; i < this.trail.length; i++) {
+                    const point = this.trail[i];
+                    ctx.globalAlpha = (i / this.trail.length) * this.life * 0.3;
+                    
+                    if (i === 0) {
+                        ctx.moveTo(point.x, point.y);
+                    } else {
+                        ctx.lineTo(point.x, point.y);
+                    }
+                }
+                ctx.stroke();
+                
+                // Draw particle
+                ctx.globalAlpha = this.life;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Add glow effect
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = this.color;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                
+                ctx.globalAlpha = 1;
+            }
+        }
+        
+        function createParticles(x, y, count) {
+            for (let i = 0; i < count; i++) {
+                const angle = (Math.PI * 2 / count) * i + Math.random() * 0.5;
+                const velocity = Math.random() * 5 + 2;
+                particles.push(new Particle(
+                    x,
+                    y,
+                    Math.cos(angle) * velocity,
+                    Math.sin(angle) * velocity
+                ));
+            }
+        }
+        
+        function animate() {
+            // Create fade effect
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Update and draw particles
+            particles = particles.filter(particle => {
+                particle.update();
+                particle.draw();
+                return particle.life > 0;
+            });
+            
+            // Continuously spawn particles at mouse position
+            if (Math.random() < 0.3) {
+                particles.push(new Particle(
+                    mouse.x + (Math.random() - 0.5) * 20,
+                    mouse.y + (Math.random() - 0.5) * 20,
+                    (Math.random() - 0.5) * 2,
+                    (Math.random() - 0.5) * 2
+                ));
+            }
+            
+            // Update particle count
+            particleCountSpan.textContent = particles.length;
+            
+            // Update rainbow hue
+            if (mode === 'rainbow') {
+                hue = (hue + 1) % 360;
+            }
+            
+            requestAnimationFrame(animate);
+        }
+        
+        // Event listeners
+        canvas.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+        });
+        
+        canvas.addEventListener('click', (e) => {
+            createParticles(e.clientX, e.clientY, 30);
+        });
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+        
+        // Mode buttons
+        document.getElementById('modeNormal').addEventListener('click', function() {
+            mode = 'normal';
+            document.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+        });
+        
+        document.getElementById('modeRainbow').addEventListener('click', function() {
+            mode = 'rainbow';
+            document.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+        });
+        
+        document.getElementById('modeGravity').addEventListener('click', function() {
+            mode = 'gravity';
+            document.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+        });
+        
+        document.getElementById('reset').addEventListener('click', () => {
+            particles = [];
+        });
+        
+        // Initialize
+        createParticles(canvas.width / 2, canvas.height / 2, 50);
+        animate();
+    </script>
+</body>
+</html>
