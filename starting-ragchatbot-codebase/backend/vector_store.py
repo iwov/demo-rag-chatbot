@@ -1,7 +1,7 @@
 import chromadb
 from chromadb.config import Settings
 from typing import List, Dict, Any, Optional
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from models import Course, CourseChunk
 from sentence_transformers import SentenceTransformer
 
@@ -11,6 +11,7 @@ class SearchResults:
     documents: List[str]
     metadata: List[Dict[str, Any]]
     distances: List[float]
+    lesson_links: List[Optional[str]] = field(default_factory=list)
     error: Optional[str] = None
     
     @classmethod
@@ -19,13 +20,14 @@ class SearchResults:
         return cls(
             documents=chroma_results['documents'][0] if chroma_results['documents'] else [],
             metadata=chroma_results['metadatas'][0] if chroma_results['metadatas'] else [],
-            distances=chroma_results['distances'][0] if chroma_results['distances'] else []
+            distances=chroma_results['distances'][0] if chroma_results['distances'] else [],
+            lesson_links=[]
         )
     
     @classmethod
     def empty(cls, error_msg: str) -> 'SearchResults':
         """Create empty results with error message"""
-        return cls(documents=[], metadata=[], distances=[], error=error_msg)
+        return cls(documents=[], metadata=[], distances=[], lesson_links=[], error=error_msg)
     
     def is_empty(self) -> bool:
         """Check if results are empty"""
@@ -95,7 +97,12 @@ class VectorStore:
                 n_results=search_limit,
                 where=filter_dict
             )
-            return SearchResults.from_chroma(results)
+            search_results = SearchResults.from_chroma(results)
+            
+            # Step 4: Retrieve lesson links for each result
+            search_results.lesson_links = self._get_lesson_links(search_results.metadata)
+            
+            return search_results
         except Exception as e:
             return SearchResults.empty(f"Search error: {str(e)}")
     
@@ -131,6 +138,57 @@ class VectorStore:
             return {"course_title": course_title}
             
         return {"lesson_number": lesson_number}
+    
+    def _get_lesson_links(self, metadata_list: List[Dict[str, Any]]) -> List[Optional[str]]:
+        """Retrieve lesson links for search results from course catalog"""
+        lesson_links = []
+        
+        # Group by course to minimize catalog queries
+        course_cache = {}
+        
+        for meta in metadata_list:
+            course_title = meta.get('course_title')
+            lesson_number = meta.get('lesson_number')
+            
+            if not course_title or lesson_number is None:
+                lesson_links.append(None)
+                continue
+            
+            # Get course lessons from cache or catalog
+            if course_title not in course_cache:
+                course_cache[course_title] = self._get_course_lessons(course_title)
+            
+            lessons = course_cache[course_title]
+            lesson_link = None
+            
+            # Find the specific lesson link
+            for lesson in lessons:
+                if lesson.get('lesson_number') == lesson_number:
+                    lesson_link = lesson.get('lesson_link')
+                    break
+            
+            lesson_links.append(lesson_link)
+        
+        return lesson_links
+    
+    def _get_course_lessons(self, course_title: str) -> List[Dict]:
+        """Retrieve lesson metadata for a course from the catalog"""
+        try:
+            results = self.course_catalog.query(
+                query_texts=[course_title],
+                where={"title": course_title},
+                n_results=1
+            )
+            
+            if results['metadatas'] and results['metadatas'][0]:
+                course_meta = results['metadatas'][0][0]
+                lessons_json = course_meta.get('lessons_json', '[]')
+                import json
+                return json.loads(lessons_json)
+        except Exception as e:
+            print(f"Error retrieving lessons for {course_title}: {e}")
+        
+        return []
     
     def add_course_metadata(self, course: Course):
         """Add course information to the catalog for semantic search"""
