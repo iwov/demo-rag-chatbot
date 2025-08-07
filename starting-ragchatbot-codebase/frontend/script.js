@@ -5,7 +5,7 @@ const API_URL = '/api';
 let currentSessionId = null;
 
 // DOM elements
-let chatMessages, chatInput, sendButton, totalCourses, courseTitles;
+let chatMessages, chatInput, sendButton, totalCourses, courseTitles, newChatButton;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     sendButton = document.getElementById('sendButton');
     totalCourses = document.getElementById('totalCourses');
     courseTitles = document.getElementById('courseTitles');
+    newChatButton = document.getElementById('newChatButton');
     
     setupEventListeners();
     createNewSession();
@@ -29,6 +30,8 @@ function setupEventListeners() {
         if (e.key === 'Enter') sendMessage();
     });
     
+    // New chat button
+    newChatButton.addEventListener('click', startNewChat);
     
     // Suggested questions
     document.querySelectorAll('.suggested-item').forEach(button => {
@@ -122,25 +125,27 @@ function addMessage(content, type, sources = null, isWelcome = false) {
     let html = `<div class="message-content">${displayContent}</div>`;
     
     if (sources && sources.length > 0) {
-        // Format sources as clickable links or plain text
-        const sourcesHtml = sources.map(source => {
+        // Format sources as clickable links in a list format
+        const sourcesHtml = sources.map((source, index) => {
+            let linkContent;
             if (typeof source === 'object' && source.text) {
                 // New format with text and URL
                 if (source.url) {
-                    return `<a href="${source.url}" target="_blank" rel="noopener noreferrer" class="source-link">${source.text}</a>`;
+                    linkContent = `<a href="${source.url}" target="_blank" rel="noopener noreferrer" class="source-link">${source.text}</a>`;
                 } else {
-                    return source.text;
+                    linkContent = source.text;
                 }
             } else {
                 // Backward compatibility - plain string
-                return source;
+                linkContent = source;
             }
-        }).join(', ');
+            return `<div class="source-item">${index + 1}. ${linkContent}</div>`;
+        }).join('');
         
         html += `
             <details class="sources-collapsible">
                 <summary class="sources-header">Sources</summary>
-                <div class="sources-content">${sourcesHtml}</div>
+                <div class="sources-content sources-list">${sourcesHtml}</div>
             </details>
         `;
     }
@@ -165,6 +170,18 @@ async function createNewSession() {
     currentSessionId = null;
     chatMessages.innerHTML = '';
     addMessage('Welcome to the Course Materials Assistant! I can help you with questions about courses, lessons and specific content. What would you like to know?', 'assistant', null, true);
+}
+
+function startNewChat() {
+    // Clear current conversation
+    currentSessionId = null;
+    chatMessages.innerHTML = '';
+    
+    // Add welcome message
+    addMessage('Welcome to the Course Materials Assistant! I can help you with questions about courses, lessons and specific content. What would you like to know?', 'assistant', null, true);
+    
+    // Focus on input field for better UX
+    chatInput.focus();
 }
 
 // Load course statistics

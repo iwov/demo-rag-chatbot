@@ -245,6 +245,20 @@ header h1 {
     color: var(--text-secondary);
 }
 
+.sources-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.source-item {
+    display: block;
+    padding: 0.25rem 0;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
 .source-link {
     color: var(--text-primary);
     text-decoration: none;
@@ -466,7 +480,8 @@ header h1 {
 
 /* Sidebar Headers */
 .stats-header,
-.suggested-header {
+.suggested-header,
+.new-chat-button {
     font-size: 0.875rem;
     font-weight: 600;
     color: var(--text-secondary);
@@ -482,12 +497,14 @@ header h1 {
 }
 
 .stats-header:focus,
-.suggested-header:focus {
+.suggested-header:focus,
+.new-chat-button:focus {
     color: var(--primary-color);
 }
 
 .stats-header:hover,
-.suggested-header:hover {
+.suggested-header:hover,
+.new-chat-button:hover {
     color: var(--primary-color);
 }
 
@@ -508,6 +525,19 @@ header h1 {
 details[open] .stats-header::before,
 details[open] .suggested-header::before {
     transform: rotate(90deg);
+}
+
+/* New Chat Button Specific Styling */
+.new-chat-button {
+    width: 100%;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    font-family: inherit;
+}
+
+.new-chat-button:active {
+    transform: scale(0.98);
 }
 
 /* Course Stats in Sidebar */
